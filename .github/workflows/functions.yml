@@ -20,7 +20,7 @@ jobs:
         dotnet-version: 3.1.100
 
     - name: Change Dir
-    - run: pushd ./api
+      run: pushd ./api
 
     - name: 'Resolve Project Dependencies Using Dotnet'
       run: dotnet build --configuration Release --output ./output
