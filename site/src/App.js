@@ -1,35 +1,75 @@
 import React, { Component } from 'react';
+import * as signalR from '@microsoft/signalr';
 
 export default class App extends Component 
 {
+  connection = null;
+
   constructor()
   {
     super();
     
-    this.state = { msg: '' }
+    this.state = { user: 'user1' }
+
+    this.onBuzz = this.onBuzz.bind(this);
   }
 
   componentDidMount()
   {
-    this.callApi();
+    this.connection = new signalR.HubConnectionBuilder()
+      .withUrl(`${process.env.REACT_APP_FUNCTIONS_ENDPOINT}/api`)
+      .configureLogging(signalR.LogLevel.Information)
+      .build();
+
+    this.connection.on('userBuzzed', this.buzzReceived);
+
+    this.connect();
+  }
+
+  componentWillUnmount()
+  {
+    this.connection.stop();
+  }
+
+  buzzReceived(user, timestamp)
+  {
+    console.log(user, timestamp);
+  }
+
+  async onBuzz()
+  {
+    try {
+      await fetch(`${process.env.REACT_APP_FUNCTIONS_ENDPOINT}/api/userBuzzed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user: this.state.user })
+      });
+    }
+    catch(err)
+    {
+      console.error(err);
+    }
   }
 
   render()
   {  
-    if (this.state.msg)
-    {
-      return <div>Message: {this.state.msg}</div>;
-    }
-    else 
-    {
-      return <div>No message</div>;
-    }
+    return (
+      <div>
+          <div className="buzzer" aria-label="Buzzer" onClick={this.onBuzz}></div>
+      </div>);
   }
 
-  async callApi()
+  async connect()
   {
-    const response = await fetch(`/api/negotiate`);
-    let { text } = await response.json();
-    this.setState({ msg: text });
+    console.log("Connecting");    
+    try {
+      await this.connection.start();
+      console.log("Connected");
+    } catch (err) {
+      console.log(err);
+      setTimeout(() => this.connect(), 5000);
+    }
   }
 }
