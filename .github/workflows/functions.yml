@@ -14,13 +14,13 @@ jobs:
     - name: 'Checkout GitHub Action'
       uses: actions/checkout@master
     
+    - name: Change Dir
+      run: pushd ./api
+
     - name: Setup .NET Core      
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.100
-
-    - name: Change Dir
-      run: pushd ./api
 
     - name: 'Resolve Project Dependencies Using Dotnet'
       run: dotnet build --configuration Release --output ./output
