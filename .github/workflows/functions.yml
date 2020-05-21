@@ -3,9 +3,9 @@ name: Functions Build and Deploy
 on:
   push:
     branches:
-    - master
+      - master
     paths:
-    - "api/**"
+      - "api/**"
 
 jobs:
   build-and-deploy:
