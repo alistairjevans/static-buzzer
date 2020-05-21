@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { Component } from 'react';
 
 export default class App extends Component 
 {
@@ -31,5 +31,3 @@ export default class App extends Component
     this.setState({ msg: text });
   }
 }
-
-export default App;
