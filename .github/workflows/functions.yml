@@ -14,9 +14,6 @@ jobs:
     - name: 'Checkout GitHub Action'
       uses: actions/checkout@master
     
-    - name: Change Dir
-      run: pushd ./api
-
     - name: Setup .NET Core      
       uses: actions/setup-dotnet@v1
       with:
@@ -24,11 +21,13 @@ jobs:
 
     - name: 'Resolve Project Dependencies Using Dotnet'
       run: dotnet build --configuration Release --output ./output
+      working-directory: api
 
     - uses: Azure/functions-action@v1
       id: fa
       with:
-        app-name: buzzer-app-api        
+        app-name: buzzer-app-api
+        package: 'api/output'
         publish-profile: ${{ secrets.SCM_CREDENTIALS }}
 
     
