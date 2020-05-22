@@ -1,75 +1,30 @@
 import React, { Component } from 'react';
-import * as signalR from '@microsoft/signalr';
+import { Container, Typography } from '@material-ui/core';
+import BuzzerPage from './BuzzerPage';
+import GetUserPage from './GetUserPage';
 
 export default class App extends Component 
 {
-  connection = null;
-
   constructor()
   {
     super();
-    
-    this.state = { user: 'user1' }
 
-    this.onBuzz = this.onBuzz.bind(this);
+    this.state = { user: null }    
   }
 
-  componentDidMount()
-  {
-    this.connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${process.env.REACT_APP_FUNCTIONS_ENDPOINT}/api`)
-      .configureLogging(signalR.LogLevel.Information)
-      .build();
-
-    this.connection.on('userBuzzed', this.buzzReceived);
-
-    this.connect();
-  }
-
-  componentWillUnmount()
-  {
-    this.connection.stop();
-  }
-
-  buzzReceived(user, timestamp)
-  {
-    console.log(user, timestamp);
-  }
-
-  async onBuzz()
-  {
-    try {
-      await fetch(`${process.env.REACT_APP_FUNCTIONS_ENDPOINT}/api/userBuzzed`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user: this.state.user })
-      });
-    }
-    catch(err)
-    {
-      console.error(err);
-    }
+  onPlayReady = (user) => {
+    this.setState({ user });
   }
 
   render()
-  {  
-    return (
-      <div>
-          <div className="buzzer" aria-label="Buzzer" onClick={this.onBuzz}></div>
-      </div>);
-  }
-
-  async connect()
   {
-    console.log("Connecting");    
-    try {
-      await this.connection.start();
-      console.log("Connected");
-    } catch (err) {
-      console.log(err);
-      setTimeout(() => this.connect(), 5000);
-    }
+    const { user } = this.state;
+    const page = user ?  
+      <BuzzerPage user={user} /> :
+      <GetUserPage onPlayReady={this.onPlayReady} />;
+    return <Container maxWidth="md">
+      <Typography variant="h3" gutterBottom>Game Buzzer</Typography>
+      {page}
+    </Container>;
   }
 }

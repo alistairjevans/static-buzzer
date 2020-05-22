@@ -14,6 +14,12 @@ namespace api
 {
     public static class Messages
     {
+        [FunctionName("createCode")]
+        public static QuizIdOutput CreateGameCode([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest request)
+        {
+            return new QuizIdOutput { Id = Guid.NewGuid().ToString() };
+        }
+
         [FunctionName("negotiate")]
         public static SignalRConnectionInfo GetSignalRInfo(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
@@ -41,6 +47,11 @@ namespace api
         private class InputModel 
         {
             public string User { get; set; }
+        }
+
+        public class QuizIdOutput 
+        {
+            public string Id { get; set;}
         }
     }
 }
