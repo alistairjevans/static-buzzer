@@ -69,9 +69,21 @@ class BuzzerPage extends Component {
         this.connection.on('userBuzzed', this.buzzReceived);
 
         // Load the audio element.
-        this.audio = new Audio();
-        this.audio.preload = "auto";
-        this.audio.src = buzzerAudio;
+        const audioEl = new Audio();
+        audioEl.src = buzzerAudio;  
+        audioEl.type = "audio/mpeg";
+
+        const audioContext = new AudioContext();
+        const track = audioContext.createMediaElementSource(audioEl);
+
+        track.connect(audioContext.destination);
+
+        audioContext.resume();
+        
+        this.audio = audioEl;
+
+        this.audio.volume = 0;
+        this.audio.play();        
 
         this.connect();
 
@@ -81,6 +93,7 @@ class BuzzerPage extends Component {
 
     componentWillUnmount() {
         this.connection.stop();
+        this.audio = null;
         if (this.knownDrift > -1)
         {
             clearTimeout(this.knownDrift);
@@ -136,19 +149,21 @@ class BuzzerPage extends Component {
 
             if (user !== this.props.user) {
                 // Someone else's buzz arrived, play the buzzer audio.
+                this.audio.volume = 1;
                 this.audio.currentTime = 0.5;
                 this.audio.play();
             }
 
             this.expiryTimer = setTimeout(() => {
                 this.setState({ buzzesExpired: true });
-            }, 5000);
+            }, 3000);
         }
     }
 
     async onBuzz() {
         if (this.props.user) {
             try {
+                this.audio.volume = 1;
                 this.audio.currentTime = 0.5;
                 this.audio.play();
 
