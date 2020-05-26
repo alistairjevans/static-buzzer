@@ -73,7 +73,11 @@ class BuzzerPage extends Component {
         audioEl.src = buzzerAudio;  
         audioEl.type = "audio/mpeg";
 
-        const audioContext = new AudioContext();
+        var AudioContext = window.AudioContext // Default
+        || window.webkitAudioContext // Safari and old versions of Chrome
+
+        var audioContext = new AudioContext();
+
         const track = audioContext.createMediaElementSource(audioEl);
 
         track.connect(audioContext.destination);
