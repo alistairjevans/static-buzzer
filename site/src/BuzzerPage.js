@@ -38,9 +38,6 @@ const styles = {
     buzzContainerExpired: {
         composes: '$buzzContainer',
         opacity: 0.6
-    },
-    audioPlayer: {
-        visibility: 'hidden'
     }
 };
 
@@ -61,8 +58,6 @@ class BuzzerPage extends Component {
         this.onTouchBuzz = this.onTouchBuzz.bind(this);
         this.onTouchEnd = this.onTouchEnd.bind(this);
         this.buzzReceived = this.buzzReceived.bind(this);
-
-        this.audio = React.createRef();
     }
 
     componentDidMount() {
@@ -72,6 +67,11 @@ class BuzzerPage extends Component {
             .build();
 
         this.connection.on('userBuzzed', this.buzzReceived);
+
+        // Load the audio element.
+        this.audio = new Audio();
+        this.audio.preload = "auto";
+        this.audio.src = buzzerAudio;
 
         this.connect();
 
@@ -136,23 +136,21 @@ class BuzzerPage extends Component {
 
             if (user !== this.props.user) {
                 // Someone else's buzz arrived, play the buzzer audio.
-                var audioEl = this.audio.current;
-                audioEl.currentTime = 0.5;
-                audioEl.play();
+                this.audio.currentTime = 0.5;
+                this.audio.play();
             }
 
             this.expiryTimer = setTimeout(() => {
                 this.setState({ buzzesExpired: true });
-            }, 3000);
+            }, 5000);
         }
     }
 
     async onBuzz() {
         if (this.props.user) {
             try {
-                var audioEl = this.audio.current;
-                audioEl.currentTime = 0.5;
-                audioEl.play();
+                this.audio.currentTime = 0.5;
+                this.audio.play();
 
                 await fetch(`${process.env.REACT_APP_FUNCTIONS_ENDPOINT}/api/userBuzzed`, {
                     method: 'POST',
@@ -185,10 +183,9 @@ class BuzzerPage extends Component {
         let buzzList = buzzes.length ? this.renderBuzzSet(buzzes) : <div />;
 
         return (
-            <div>                
+            <div>
                 <div className={buzzerClass} aria-label="Buzzer" onMouseDown={this.onBuzz} onTouchStart={this.onTouchBuzz} onTouchEnd={this.onTouchEnd}></div>
-                <Paper><div className={buzzesExpired ? classes.buzzContainerExpired : classes.buzzContainer}>{buzzList}</div></Paper>                
-                <audio ref={this.audio} className={classes.audioPlayer} preload="auto" src={buzzerAudio}></audio>
+                <Paper><div className={buzzesExpired ? classes.buzzContainerExpired : classes.buzzContainer}>{buzzList}</div></Paper>
             </div>
         );
     }
