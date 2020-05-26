@@ -20,6 +20,25 @@ namespace api
             return new QuizIdOutput { Id = Guid.NewGuid().ToString() };
         }
 
+        [FunctionName("getDrift")]
+        public static async Task<DriftModel> GetDrift([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest request)
+        {            
+            var body = await request.ReadAsStringAsync();
+
+            var model = JsonConvert.DeserializeObject<DriftModel>(body);
+
+            var clientStamp = model.ClientUtc;
+
+            // Calculate drift.
+            var diff = (DateTime.UtcNow - clientStamp).TotalMilliseconds;
+
+            return new DriftModel
+            {
+                ClientUtc = clientStamp,
+                KnownDriftMs = (int) diff
+            };
+        }
+
         [FunctionName("negotiate")]
         public static SignalRConnectionInfo GetSignalRInfo(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req,
@@ -36,22 +55,35 @@ namespace api
             var body = await request.ReadAsStringAsync();
 
             var model = JsonConvert.DeserializeObject<InputModel>(body);
+
+            var clientReportedTime = model.Timing.ClientUtc;
+
+            var actualTime = clientReportedTime.AddMilliseconds(model.Timing.KnownDriftMs);
             
             await signalRMessages.AddAsync(new SignalRMessage
             {
                 Target = "userBuzzed",
-                Arguments = new object[] { model.User, DateTime.UtcNow }
+                Arguments = new object[] { model.User, actualTime }
             });
         }
 
         private class InputModel 
         {
             public string User { get; set; }
+
+            public DriftModel Timing { get;set; }
         }
 
         public class QuizIdOutput 
         {
             public string Id { get; set;}
+        }
+
+        public class DriftModel
+        {
+            public DateTime ClientUtc { get; set; }
+
+            public int KnownDriftMs { get; set; }
         }
     }
 }

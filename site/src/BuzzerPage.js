@@ -49,6 +49,8 @@ class BuzzerPage extends Component {
     lastBuzz = Date.now();
     audio = null;
     expiryTimer = null;
+    knownDrift = 0;
+    driftTimeout = -1;
 
     constructor() {
         super();
@@ -72,10 +74,36 @@ class BuzzerPage extends Component {
         this.connection.on('userBuzzed', this.buzzReceived);
 
         this.connect();
+
+        // Start the drift measurement.
+        this.measureDrift();
     }
 
     componentWillUnmount() {
         this.connection.stop();
+        if (this.knownDrift > -1)
+        {
+            clearTimeout(this.knownDrift);
+        }
+    }
+
+    measureDrift = async () => 
+    {
+        let timestamp = new Date().toISOString();
+
+        let response = await fetch(`${process.env.REACT_APP_FUNCTIONS_ENDPOINT}/api/getDrift`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ clientUtc: timestamp, knownDriftMs: this.knownDrift })
+        });
+
+        let data = await response.json();
+
+        this.knownDrift = data.knownDriftMs;
+
+        this.driftTimeout = setTimeout(() => this.measureDrift(), 30000);
     }
 
     buzzReceived(user, timestamp) {
@@ -131,7 +159,7 @@ class BuzzerPage extends Component {
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ user: this.props.user })
+                    body: JSON.stringify({ user: this.props.user, timing: { clientUtc: new Date().toISOString(), knownDriftMs: this.knownDrift } })
                 });
             }
             catch (err) {
