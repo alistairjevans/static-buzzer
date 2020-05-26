@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import * as signalR from '@microsoft/signalr';
 import { List, ListItem, ListItemText, Paper, Divider } from '@material-ui/core';
 import buzzerAudio from './assets/buzzer.mp3';
+import { Howl } from 'howler';
 import { withStyles } from 'react-jss';
 
 const styles = {
@@ -68,26 +69,9 @@ class BuzzerPage extends Component {
 
         this.connection.on('userBuzzed', this.buzzReceived);
 
-        // Load the audio element.
-        const audioEl = new Audio();
-        audioEl.src = buzzerAudio;  
-        audioEl.type = "audio/mpeg";
-
-        var AudioContext = window.AudioContext // Default
-        || window.webkitAudioContext // Safari and old versions of Chrome
-
-        var audioContext = new AudioContext();
-
-        const track = audioContext.createMediaElementSource(audioEl);
-
-        track.connect(audioContext.destination);
-
-        audioContext.resume();
-        
-        this.audio = audioEl;
-
-        this.audio.volume = 0;
-        this.audio.play();        
+        this.audio = new Howl({
+            src: [buzzerAudio]
+        });
 
         this.connect();
 
@@ -153,8 +137,7 @@ class BuzzerPage extends Component {
 
             if (user !== this.props.user) {
                 // Someone else's buzz arrived, play the buzzer audio.
-                this.audio.volume = 1;
-                this.audio.currentTime = 0.5;
+                this.audio.seek(0.5);
                 this.audio.play();
             }
 
@@ -167,8 +150,7 @@ class BuzzerPage extends Component {
     async onBuzz() {
         if (this.props.user) {
             try {
-                this.audio.volume = 1;
-                this.audio.currentTime = 0.5;
+                this.audio.seek(0.5);
                 this.audio.play();
 
                 await fetch(`${process.env.REACT_APP_FUNCTIONS_ENDPOINT}/api/userBuzzed`, {
